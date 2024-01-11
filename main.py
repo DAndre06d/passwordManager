@@ -2,12 +2,31 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
+
+
+def find_password():
+    search = web_entry.get()
+    try:
+        with open("Password_Manager.json", "r") as data:
+            file = json.load(data)
+    except FileNotFoundError:
+        messagebox.showinfo(title="Error", message="No Data file found.")
+    else:
+        if search in file:
+            email = file[search]["email"]
+            password = file[search]["password"]
+            messagebox.showinfo(title=f"{search}", message=f"Email: {email} \nPassword: {password}")
+        else:
+            messagebox.showinfo(title="Ooops", message="No details for the website exist")
 
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 # Password Generator Project
 def generate_pass():
-    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+               'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+               'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
     symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
 
@@ -36,18 +55,29 @@ def add():
     website = web_entry.get()
     email = email_entry.get()
     password = pass_entry.get()
+    new_data = {
+        website: {
+            "email": email,
+            "password": password
+        }
+    }
     if len(website) < 1 or len(email) < 1 or len(password) < 1:
-        messagebox.showinfo(title="Ooops",message="Please don't leave any field empty")
+        messagebox.showinfo(title="Ooops", message="Please don't leave any field empty")
     else:
-        is_ok = messagebox.askokcancel(title="website",
-                                       message=f"These are the details entered: \n Website: {website}\n "
-                                               f"Email: {email} \n Password: {password}\n "
-                                               f"Is it ok to save?")
-        if is_ok:
-            with open("Password_Manager.txt", "a") as files:
-                files.write(f"{website} | {email} | {password} \n")
-                web_entry.delete(0, END)
-                pass_entry.delete(0, END)
+        try:
+            with open("Password_Manager.json", "r") as files:
+                # read data
+                data = json.load(files)
+        except FileNotFoundError:
+            with open("Password_Manager.json", "w") as files:
+                json.dump(new_data, files, indent=4)
+        else:
+            data.update(new_data)
+            with open("Password_Manager.json", "w") as files:
+                json.dump(data, files, indent=4)
+        finally:
+            web_entry.delete(0, END)
+            pass_entry.delete(0, END)
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -60,9 +90,11 @@ window.config(padx=50, pady=50)
 # Website
 web_label = Label(text="Website", font=("Arial", 13))
 web_label.grid(column=0, row=1)
-web_entry = Entry(width=42)
+web_entry = Entry(width=24)
 web_entry.focus()
-web_entry.grid(column=1, row=1, columnspan=2)
+web_entry.grid(column=1, row=1)
+website_search = Button(text="Search", command=find_password)
+website_search.grid(column=2,row=1)
 
 # Email/Username
 email_label = Label(text="Email/Username", font=("Arial", 13))
